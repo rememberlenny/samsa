@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -39,27 +40,27 @@
 
 	<div id="panel-info" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Info</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-ui" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> UI</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-webfont" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Webfont</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-axes" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Axes</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-stat" class="panel closed">
 		<h2><span class="icon bold reveal">&#xf04b;</span> STAT</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-instances" class="panel open">
@@ -69,17 +70,17 @@
 			<span class="icon" id="instances-as-list">&#xf0c9;</span>
 			-->
 		</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-tvts" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Delta sets</h2>
-		<div style="overflow-x: scroll;"></div>
+		<div class="panel-content" style="overflow-x: scroll;"></div>
 	</div>
 
 	<div id="panel-designspace" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Designspace</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-glyphs" class="panel open">
@@ -92,24 +93,24 @@
 			<span class="texticon" id="glyphs-ids" title="Glyph IDs">123</span>
 			<!-- <span class="icon bold" id="glyphs-fastforward">&#xf04e;</span> -->
 		</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	<br clear="all">
 
 	</div>
 
 	<div id="panel-font-list" class="panel open">
 		<h2><span class="icon bold reveal open">&#xf04b;</span> Fonts ready to load</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-media" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> Media</h2>
-		<div></div>
+		<div class="panel-content"></div>
 	</div>
 
 	<div id="panel-about" class="panel open">
 		<h2><span class="icon bold reveal">&#xf04b;</span> About</h2>
-		<div style="padding: 0.5em; font-size: 75%;">
+		<div class="panel-content" style="padding: 0.5em; font-size: 75%;">
 			Samsa is developed by Laurence Penney 2017–present. In 2019 Google Fonts funded major improvements and libre licensing.
 			<ul>
 			<li><a href="https://github.com/Lorp/samsa">GitHub repository</a></li>
@@ -231,6 +232,7 @@ CONFIG.uiModes = {
 			size: 12,
 		},
 	},
+
 
 	dark: {
 		name: "dark",
@@ -372,7 +374,10 @@ CONFIG.uiModes = {
 			opacity: 1,
 		},		
 
-		pointNumbers: {},
+		pointNumbers: {
+			angle: 90,
+			offset: 10,
+		},
 
 		glyphDefault: {
 			fill: "none",
@@ -534,6 +539,19 @@ CONFIG.docs = {
 	hoi: "http://underware.nl/case-studies/hoi/",
 };
 
+
+// add an info (help) icon to each panel
+Qall("#controls .panel>h2").forEach(header => {
+	let info = EL("div");
+	info.innerHTML = "&#xf129;";
+	info.classList.add("icon");
+	info.classList.add("bold");
+	info.classList.add("info");
+	info.style.position = "absolute";
+	info.style.right = "0.5em";
+	info.style.top = "0.1em";
+	header.appendChild(info);
+});
 
 
 // shorthands
@@ -805,14 +823,14 @@ function vfLoaded (font) {
 		GLOBAL.tuple.push(0);
 	});
 
-
 	///////////////////////////////////////////////////////
-	// Main container grid: hide overlay and show main UI
+	// Main container grid: hide overlay and show main UI, reset cursor
 	///////////////////////////////////////////////////////
 	Q("#drag-drop-zone").style.display = "none";
 	Q("#font-file").style.display = "block";
 	Q("#drawing").style.display = "block";
 	Q("#container").style.backgroundColor = "transparent";
+	Q("body").style.cursor = "default";
 
 
 	///////////////////////////////////////////////////////
@@ -848,8 +866,9 @@ function vfLoaded (font) {
 		// ui options select
 		let uiModeHTML = "";
 		uiModeHTML += `<select id="ui-mode">`;
-		Object.keys(font.config.uiModes).forEach(mode => {
-			uiModeHTML += `<option value="${mode}">${mode}</option>`;
+		Object.keys(font.config.uiModes).forEach(modeId => {
+			let mode = font.config.uiModes[modeId];
+			uiModeHTML += `<option value="${modeId}">${mode.name || modeId}</option>`;
 		});
 		uiModeHTML += `</select><br>`;
 		panel.innerHTML += uiModeHTML;
@@ -1694,9 +1713,7 @@ function vfLoaded (font) {
 
 	// ui: handle change of mode
 	Q("#ui-mode").addEventListener("change", () => {
-		console.log(Q("#ui-mode").value);
-		font.config.ui = font.config.uiModes[Q("#ui-mode").value];
-
+		font.config.ui = font.config.uiModes[Q("#ui-mode").value]; // set the config variable to the current selection in #ui-mode
 		let instance = font.addInstance(null, {tuple: GLOBAL.tuple});
 		setActiveGlyph (GLOBAL.currentGlyphId, instance); // update the SVG
 		font.instances.pop();
@@ -1718,6 +1735,7 @@ function vfLoaded (font) {
 
 function updateDesignSpaceMoved(e) {
 
+	const saveScrollY = Q("#controls").scrollTop; // fixes Safari macOS 10.14 bug where controls panel scrolls to top on most interactions
 	let font = GLOBAL.vf;
 	let rect = e.target.getBoundingClientRect();
 	let x = e.clientX - rect.left;
@@ -1763,6 +1781,8 @@ function updateDesignSpaceMoved(e) {
 
 	axesUpdateValues();
 	panelWebfont_handleChange();
+
+	Q("#controls").scrollTop = saveScrollY; // for the macOS 10.14 bug referenced at the start of this click handler
 }
 
 function numberFormat(val, axis) {
@@ -1870,17 +1890,16 @@ function panelWebfont_handleChange() {
 
 function axisInput(ev) {
 
+	const saveScrollY = Q("#controls").scrollTop; // fixes Safari macOS 10.14 bug where controls panel scrolls to top on most interactions
 	let font = GLOBAL.vf;
 	let fvsFromSliders = getCurrentFvs();
 	let fvs = font.tupleToFvs(GLOBAL.tuple);
 	let tag = ev.target.data.axis.tag;
 	fvs[tag] = fvsFromSliders[tag];
 	ev.target.data.current = fvs[tag];
-	let instance = font.addInstance(fvs); // { name: "Custom", tuple: [] };
-
 
 	// create instance
-	//let instance = font.addInstance(getCurrentFvs()); // { name: "Custom", tuple: [] };
+	let instance = font.addInstance(fvs); // { name: "Custom", tuple: [] };
 
 	let glyph = font.glyphs[GLOBAL.currentGlyphId];
 	let iglyph = glyphApplyVariations(glyph, null, instance);
@@ -1890,8 +1909,9 @@ function axisInput(ev) {
 	panelSTAT_handleChange();
 	panelWebfont_handleChange();
 
-	// delete instance? definitely!
+	// delete instance
 	font.instances.pop();
+	Q("#controls").scrollTop = saveScrollY; // for the macOS 10.14 bug referenced at the start of this click handler
 }
 
 function updateDesignspace() {
@@ -2011,7 +2031,6 @@ function panelSTAT_handleChange(fvs) {
 	Qall("#panel-stat select").forEach((select, a) => {
 		let tag;
 		if (a < STAT.designAxes.length) {
-			//let selectValue;
 			tag = select.data.designAxis.tag;
 			if (select.options.length > 1) {
 				if (fvs[tag] === undefined) // this fvs needs to specify all fvar axes
@@ -2050,7 +2069,7 @@ function panelSTAT_handleChange(fvs) {
 
 				if (!thisElidable) {
 					if (a < STAT.designAxes.length)
-						statNamesStrs.push(name); // append multiaxis names
+						statNamesStrs.push(name); // append single-axis names
 					else
 						statNamesStrs.unshift(name); // prepend multiaxis names (the OpenType spec doesn’t not say what happens for these names… perhaps they should be ignored if their axes have already been accounted for by single-axis axisValueTables)
 					elidable = false; // global elidable
@@ -2424,7 +2443,7 @@ function setActiveGlyph (g, instance) {
 	layerIds.push(5);
 	if (Q("#arrows-split").checked && ui.arrow.strokeWidth)
 		layerIds.push(6);
-	if (Q("#point-numbers").checked && ui.arrow.strokeWidth)
+	if (Q("#point-numbers").checked && CONFIG.ui.name != "preview")
 		layerIds.push(8);
 
 	layerIds.forEach(L => {
@@ -2939,6 +2958,7 @@ function setActiveGlyph (g, instance) {
 						transform: `translate(0,${2*point[1]}) scale(1,-1)`,
 					});
 
+					// if angle points to the left of the point, make the number’s text anchor on the right hand side
 					if (xOffset < 0)
 						svgText.attrsSVG({
 							"text-anchor": "end",
@@ -3114,14 +3134,15 @@ function playGlyphs() {
 // click handlers for all clicks
 document.onclick = function (event) {
 
-	//console.log(event.target);
+	console.log(event.target);
 	// about target
 	// - via the method of assignment in the if(), target gets the desired element rather than a child (or grandchild) that in fact received the event
 	// - the closest(x) method is great: we find whether event.target happened on something within something selected by x
 	// - order matters! (e.g. an icon within an instance row must be handled before the instance row itself)
 	let target;
 	let font = GLOBAL.vf;
-
+	const saveScrollY = Q("#controls").scrollTop; // fixes Safari macOS 10.14 bug where controls panel scrolls to top on most interactions
+	let handled = false;
 
 	// load default font
 	if (event.target == Q("#font-file")) {
@@ -3133,11 +3154,9 @@ document.onclick = function (event) {
 			url: `${GLOBAL.fontList.directory}/${GLOBAL.fontList.default}`, // "fonts/MutatorSans.ttf"
 			callback: vfLoaded,
 		});
-	}
 
-	// else if (event.target.id == "dsAxesMultiple") {
-	// 	updateDesignspace();
-	// }
+		handled = true;
+	}
 
 	else if (target = event.target.closest("#controls .panel .instantiate")) {
 
@@ -3147,25 +3166,21 @@ document.onclick = function (event) {
 
 		GLOBAL.vf.makeInstance(instance); // creates instance.static
 
-		//window.open (`data:font/ttf;base64,${uint8ToBase64(instance.static)}`, "_blank"); // this method wasn’t great
-
 		let fauxLink = document.createElement("a");
 		fauxLink.download = GLOBAL.vf.filename;
 		fauxLink.href = "data:font/ttf;base64," + uint8ToBase64(instance.static);
 
-		//let str = btoa(instance.static)
-		//console.log (typeof str);
-		//console.log (str);
-		//fauxLink.href = "data:font/ttf;base64," + str;
 		document.body.appendChild(fauxLink); // needed for Firefox, not Chrome or Safari
 		fauxLink.click();
 		fauxLink.remove();
 
+		handled = true;
 	}
 
 	else if (target = event.target.closest(".instance")) {
 
 		setActiveInstance(GLOBAL.vf, target);
+		handled = true;
 	}
 
 	else if (target = event.target.closest("#panel-axes .header .icon")) {
@@ -3198,11 +3213,86 @@ document.onclick = function (event) {
 			panelWebfont_handleChange();
 			setAxes (GLOBAL.vf, fvs);
 		}
+		handled = true;
 	}
 
 	else if (event.target.classList.contains("ctrl-pt")) {
 		console.log("click pt", event.target);
 		console.log(event.target.data.point);
+		handled = true;
+	}
+
+	else if (target = event.target.closest("#controls .panel>h2 .info")) {
+
+		// load help file
+		const helpFile = target.parentNode.parentNode.id + ".md"; // one of these for each panel, so panel-glyphs.md, panel-stat.md, etc.
+
+		fetch(`help/${helpFile}`)
+		.then(response => {
+				return response.text();
+			}, 
+			error => {
+				return "## No response from server\n\nHelp files are only available when Samsa is installed on a web server.";
+				console.log ("No response from server: Samsa was probably run by double-clicking the html file, so under file:// instead of https://");
+			}
+		)
+		.then(doc => {
+
+			doc = ">>> EXPERIMENTAL HELP DISPLAY <<<\n\n" + doc;
+
+ 			// linebreaks
+			doc = doc.replace( /\n\n/g, "<br>\n\n");
+			doc = doc.replace( /  \n/g, "<br>\n");
+
+			// numbered lists
+			// - m is multiline, g is global
+			doc = doc.replace( /\n\n^\d+\. (.+?)$/gm, "\n\n<ol><li>$1</li>"); // first
+			doc = doc.replace( /^\d+\. (.*?)$\n\n/gm, "\n<li>$1</li></ol>\n"); // last
+			doc = doc.replace( /^\d+\. (.+?)$/gm, "\n<li>$1</li>"); // middle
+
+			// unnumbered lists
+			doc = doc.replace( /\n\n(\*|-) (.+?)$/gm, "\n\n<ul><li>$2</li>"); // first
+			doc = doc.replace( /^(\*|-) (.*?)$\n\n/gm, "\n<li>$2</li></ul>\n"); // last
+			doc = doc.replace( /^(\*|-) (.+?)$/gm, "\n<li>$2</li>"); // middle
+
+			doc = doc.replace( /(\*\*|__)([^\n]+?)(\*\*|__)/g, `<strong>$2</strong>`); // bold
+			doc = doc.replace( /(\*|_)([^\n]+?)(\*|_)/g, `<em>$2</em>`); // italic
+
+			// headings
+			doc = doc.replace( /### (.*)\n/g, "<h3>$1</h3>\n"); // h3
+			doc = doc.replace( /## (.*)\n/g, "<h2>$1</h2>\n"); // h2
+			doc = doc.replace( /# (.*)\n/g, "<h1>$1</h1>\n"); // h1
+
+			// links
+			doc = doc.replace( /\[([^\]]*?)\]\(([^)]*?)\)/g, `<a href="$2">$1</a>`); // links
+
+			// code
+			// - TODO code blocks
+			doc = doc.replace( /`([^ \n]*?)`/g, `<tt>$1</tt>`); // <tt>
+
+			// build ui
+			const overlay = EL("div");
+			overlay.classList.add("popup-overlay");
+			document.body.appendChild(overlay);
+
+			const help = EL("div");
+			help.id = "help-overlay";
+			help.classList.add("popup-modal");
+			help.innerHTML = doc;
+			document.body.appendChild(help);
+
+			const closeButton = EL("button");
+			closeButton.style.position = "absolute";
+			closeButton.style.top = "1em";
+			closeButton.style.right = "2em";
+			closeButton.innerText = "Close";
+			help.appendChild(closeButton);
+
+			closeButton.addEventListener("click", removeOverlay);
+			overlay.addEventListener("click", removeOverlay);
+						
+		});
+		handled = true;
 	}
 
 	else if (target = event.target.closest("#panel-glyphs>h2") 
@@ -3240,10 +3330,7 @@ document.onclick = function (event) {
 			font.instances.pop();
 		}
 
-		// let glyph = font.glyphs[GLOBAL.currentGlyphId];
-		// let iglyph = glyphApplyVariations(glyph, null, instance);
-		// setActiveGlyph (GLOBAL.currentGlyphId, instance); // update the SVG
-
+		handled = true;
 	}
 
 	else if (target = event.target.closest("#panel-glyphs>h2") 
@@ -3256,27 +3343,34 @@ document.onclick = function (event) {
 			label.querySelector(".number").style.display = active ? "inline" : "none";
 			label.querySelector(".name").style.display = active ? "none" : "inline";
 		})
+		handled = true;
 	}
 
 	else if (target = event.target.closest("#controls .panel>h2")) {
+
 		// toggle display of panel when panel header is clicked
-		let panelDiv = target.parentNode.querySelector("div");
-		panelDiv.parentNode.classList.toggle("open");
-		if (panelDiv.parentNode.classList.contains("open"))
+		let panelDiv = target.parentNode.querySelector("div.panel-content");
+		console.log(panelDiv);
+		target.parentNode.classList.toggle("open");
+		if (target.parentNode.classList.contains("open"))
 			panelDiv.style.display = "block";
 		else
 			panelDiv.style.display = "none";
+		handled = true;
 	}
+
+
 
 	else if (target = event.target.closest(".glyph-thumb")) {
 
 		let comps = target.id.split("-");
 		let g = comps[1];
+		event.preventDefault(); // stops the <a href...> having an effect?
 
 		let instance = font.addInstance(null, {tuple: GLOBAL.tuple});
 		setActiveGlyph(g, instance);
 		font.instances.pop();
-
+		handled = true;
 	}
 
 	else if (event.target.classList.contains("axis-nudge")) {
@@ -3296,26 +3390,30 @@ document.onclick = function (event) {
 		panelWebfont_handleChange();
 		setAxes (font, font.tupleToFvs(GLOBAL.tuple));
 		font.instances.pop();
-	
-		return false;
+		handled = true;
 	}
 
 	else if (target = event.target.closest("#panel-font-list .font-file")) {
 
 		// load font from the list
+		event.preventDefault(); // stops the <a href...> having an effect?
+
 		let vf = new SamsaFont({
 
 			fontFamily: "FontNameShouldGoHere",
 			url: `${GLOBAL.fontList.directory}/${target.innerText}`,
 			callback: vfLoaded,
 		});
+		handled = true;
+	}
 
+	if (handled) {
+		Q("#controls").scrollTop = saveScrollY; // for the macOS 10.14 bug referenced at the start of this click handler
 		return false;
 	}
 
-
-	//return false;
-
+	// no return value if the event was not handled
+	return true;
 }
 
 
@@ -3326,6 +3424,8 @@ Q("#file-upload-input").addEventListener("change", ev => {
 	console.log(ev.target.files[0]);
 
 	const file = ev.target.files[0];
+
+	Q("body").style.cursor = "wait";
 
     const reader = new FileReader();
     reader.__file__ = file;
@@ -3356,12 +3456,24 @@ Q("#file-upload-input").addEventListener("dragleave", ev => {
 	Q("#drag-drop-zone").style.borderColor = "grey";
 });
 
+
+// destroy the elements that make the overlay popup
+function removeOverlay () {
+
+	Qall(".popup-overlay, .popup-modal").forEach(el => {
+		el.remove();
+	});
+}
+
+
 // handle the drag-drop
 // - https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
 function dropHandler(ev) {
   
 	console.log("dropHandler");
 	ev.preventDefault(); // prevent default behavior (which is to open the file)
+
+	Q("body").style.cursor = "wait";
 
 	if (ev.dataTransfer.items) {
 		const numItems = 1; // ev.dataTransfer.items.length; // for now, only process the first file dropped
@@ -3401,23 +3513,6 @@ Q("#font-file").addEventListener("dragover",function(e){
 
 // method to attach multiple SVG attributes at once
 // - example of attrs: { d: path, stroke: "black", "stroke-width": "2px", fill: "#eee" }
-// - TODO: this is really nasty, we should only apply it to SVG objects
-
-/*Object.prototype.attrsSVG = function (attrs) {
-	for (const prop in attrs) {
-		this.setAttributeNS(null, prop, attrs[prop]);
-	}
-}
-*/
-
-//let tempSVG = document.createElementNS('http://www.w3.org/2000/svg', "SVG");
-/*
-document.createElementNS.prototype.attrsSVG = function (attrs) {
-	for (const prop in attrs) {
-		this.setAttributeNS(null, prop, attrs[prop]);
-	}
-};
-*/
 SVGElement.prototype.attrsSVG = function (attrs) {
 	for (const prop in attrs) {
 		this.setAttributeNS(null, prop, attrs[prop]);
@@ -3479,7 +3574,7 @@ if (["http:", "https:"].includes(window.location.protocol)) {
 		panel.innerHTML = "";
 		GLOBAL.fontList = responseJSON;
 		GLOBAL.fontList.fonts.forEach(fontFilename => {
-			panel.innerHTML += `<li class="font-file"><a href="">${fontFilename}</a></li>`;
+			panel.innerHTML += `<li class="font-file">${fontFilename}</li>`;
 		});
 	});
 }
@@ -3490,14 +3585,57 @@ else {
 
 
 
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown", ev => {
 
-	if (e.key == " ") {
+	if (ev.key == " " && GLOBAL.vf) {
+		const el = ev.target;
+		const tagName = el.tagName.toLowerCase();
+		if (el.isContentEditable || (tagName == "input" && el.type == "text") || tagName == "textarea") {
+			return true;
+		}
 
+		if (ev.repeat) {
+			ev.preventDefault(); // we don’t want anything to scroll, which is default behaviour for space
+			return true;
+		}
+
+		// switch to preview mode if not in preview mode
+		ev.preventDefault();
+		if (Q("#ui-mode").value != "preview") {
+			const saveScrollY = Q("#controls").scrollTop; // fixes Safari macOS 10.14 bug where controls panel scrolls to top on most interactions
+			GLOBAL.quickPreviewSaved = GLOBAL.vf.config.ui.name;
+			GLOBAL.vf.config.ui = GLOBAL.vf.config.uiModes["preview"];
+			let instance = GLOBAL.vf.addInstance(null, {tuple: GLOBAL.tuple});
+			setActiveGlyph (GLOBAL.currentGlyphId, instance);
+			GLOBAL.vf.instances.pop();
+			Q("#controls").scrollTop = saveScrollY; // for the macOS 10.14 bug referenced at the start of this click handler
+		}
+		return false;
+	}
+
+	if (ev.keyCode == 27) {
+		removeOverlay();
 	}
 
 });
 
+
+document.addEventListener("keyup", ev => {
+
+	if (ev.key == " " && GLOBAL.vf) {
+		// switch to preview mode if not in preview mode
+		if (GLOBAL.quickPreviewSaved) {
+			ev.preventDefault();
+			GLOBAL.vf.config.ui = GLOBAL.vf.config.uiModes[GLOBAL.quickPreviewSaved];
+			GLOBAL.quickPreviewSaved = null;
+			let instance = GLOBAL.vf.addInstance(null, {tuple: GLOBAL.tuple});
+			setActiveGlyph (GLOBAL.currentGlyphId, instance);
+			GLOBAL.vf.instances.pop();
+		}
+		return false;
+	}
+
+});
 
 </script>
 
