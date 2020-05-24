@@ -2504,9 +2504,8 @@ function quit(obj) {
 
 
 // exports for node.js
-if (CONFIG.isNode) {
-	module.exports = {
-		SamsaFont: SamsaFont,
-		//SamsaGlyph: SamsaGlyph,
-	};
-}
+
+module.exports = {
+	SamsaFont: SamsaFont,
+	//SamsaGlyph: SamsaGlyph,
+};
